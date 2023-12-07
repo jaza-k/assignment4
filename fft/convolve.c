@@ -141,9 +141,9 @@ double* padData(float* data, int originalSize, int paddedSize) {
         exit(-1);
     }
 
-    // copy original data into padded array, interleaving with zeros
-    for (int i = 0; i < originalSize; ++i) {
-        paddedData[2 * i] = (double) data[i]; // Real part
+    // optimize data layout for better cache performance
+    for (int i = 0, j = 0; i < originalSize; ++i, j += 2) {
+        paddedData[j] = (double) data[i]; // Real part
     }
     return paddedData;
 }
@@ -227,8 +227,8 @@ void readWavFile(char *fileName, float **audioData, WavHeader *header, int *num_
     }
 
     for (int i = 0; i < *num_samples; ++i) {
-        (*audioData)[i] = bytesToFloat(tempBuffer[i]);
-    }
+        (*audioData)[i] = tempBuffer[i] / 32768.0f;
+    }   
 
     free(tempBuffer);
     fclose(file);
@@ -270,24 +270,6 @@ void writeWavFile(char *fileName, float *audioData, WavHeader *header, int num_s
     fclose(file);
 }
 
-float bytesToFloat(short s) {
-    return s / 32768.0;
+inline float bytesToFloat(short s) {
+    return s / 32768.0f;
 }
-
-// void convolve(float x[], int N, float h[], int M, float y[], int P) {
-//     int n,m;
-
-//     /* Clear Output Buffer y[] */
-//     for (n=0; n < P; n++)
-//     {
-//         y[n] = 0.0;
-//     }
-
-//     /* Outer Loop: process each input value x[n] in turn */
-//     for (n=0; n<N; n++){
-//         /* Inner loop: process x[n] with each sample of h[n] */
-//         for (m=0; m<M; m++){
-//             y[n+m] += x[n] * h[m];
-//         }
-//     }
-// }
