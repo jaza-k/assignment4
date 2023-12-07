@@ -69,7 +69,6 @@ void four1(double data[], int nn, int isign) {
     n = nn << 1;
     j = 1;
 
-    // This first loop is left as-is because its structure is complex
     for (i = 1; i < n; i += 2) {
         if (j > i) {
             SWAP(data[j], data[i]);
@@ -92,8 +91,6 @@ void four1(double data[], int nn, int isign) {
         wpi = sin(theta);
         wr = 1.0;
         wi = 0.0;
-
-        // Loop unrolling applied here
         for (m = 1; m < mmax; m += 2) {
             for (i = m; i <= n; i += istep) {
                 j = i + mmax;
@@ -103,18 +100,6 @@ void four1(double data[], int nn, int isign) {
                 data[j+1] = data[i+1] - tempi;
                 data[i] += tempr;
                 data[i+1] += tempi;
-
-                // Unrolling the innermost loop
-                if (i + 4 <= n) {
-                    int j2 = j + 4;
-                    int i2 = i + 4;
-                    double tempr2 = wr * data[j2] - wi * data[j2+1];
-                    double tempi2 = wr * data[j2+1] + wi * data[j2];
-                    data[j2] = data[i2] - tempr2;
-                    data[j2+1] = data[i2+1] - tempi2;
-                    data[i2] += tempr2;
-                    data[i2+1] += tempi2;
-                }
             }
             wr = (wtemp = wr) * wpr - wi * wpi + wr;
             wi = wi * wpr + wtemp * wpi + wi;
@@ -138,8 +123,12 @@ void complexMultiply(double* data1, double* data2, int size) {
         double c = data2[i];     // real, second array
         double d = data2[i + 1]; // imaginary, second array
 
-        data1[i] = a * c - b * d; 
-        data1[i + 1] = a * d + b * c;
+        // minimize the number of multiplication
+        double ac_minus_bd = a * c - b * d;
+        double ad_plus_bc = a * d + b * c;
+
+        data1[i] = ac_minus_bd;
+        data1[i + 1] = ad_plus_bc;
     }
 }
 
